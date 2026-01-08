@@ -75,6 +75,10 @@ public class UIController : MonoBehaviour
     private void UpdateLivesText(int currentLives)
     {
         livesText.text= $"Lives: {currentLives}";
+        if(currentLives <=0)
+        {
+            //ShowGameOver();
+        }
     }
 
     private void UpdateResourcesText(int currentResources)
@@ -199,5 +203,11 @@ public class UIController : MonoBehaviour
         #else
             Application.Quit();
         #endif
+    }
+
+    public void GoToMainMenu()
+    {
+        GameManager.Instance.SetTimeScale(1f);
+        SceneManager.LoadScene("MainMenu");
     }
 }
