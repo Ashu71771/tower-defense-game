@@ -12,7 +12,8 @@ public class UIController : MonoBehaviour
     [SerializeField] private TMP_Text waveText;
     [SerializeField] private TMP_Text livesText;
     [SerializeField] private TMP_Text resourceText;
-    [SerializeField] private GameObject noResourcesText;
+    [SerializeField] private TMP_Text warningText;
+    [SerializeField] private TMP_Text objectiveText;
 
     private Platform _currentPlatform;
 
@@ -41,6 +42,7 @@ public class UIController : MonoBehaviour
         GameManager.OnResourcesChanged +=UpdateResourcesText;
         Platform.OnPlatformClicked += HandlePlatformClicked;
         TowerCard.OnTowerSelected += HandleTowerSelected;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
@@ -50,6 +52,7 @@ public class UIController : MonoBehaviour
         GameManager.OnResourcesChanged -=UpdateResourcesText;
         Platform.OnPlatformClicked -=HandlePlatformClicked;
         TowerCard.OnTowerSelected -= HandleTowerSelected;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
@@ -129,6 +132,12 @@ public class UIController : MonoBehaviour
 
     private void HandleTowerSelected(TowerData towerData)
     {
+        if(_currentPlatform.transform.childCount > 0)
+        {
+            HideTowerPanel();
+            StartCoroutine(ShowWarningMessage("This platform is already occupied!"));
+            return;
+        }
         if(GameManager.Instance.Resources >= towerData.cost)
         {
             GameManager.Instance.SpendResources(towerData.cost);
@@ -136,16 +145,17 @@ public class UIController : MonoBehaviour
         }
         else
         {
-            StartCoroutine(ShowNoResourcesMessage());
+            StartCoroutine(ShowWarningMessage("Not enough resources!"));
         }
         HideTowerPanel();
     }
 
-    private IEnumerator ShowNoResourcesMessage()
+    private IEnumerator ShowWarningMessage(string message)
     {
-        noResourcesText.SetActive(true);
+        warningText.text = message;
+        warningText.gameObject.SetActive(true);
         yield return new WaitForSecondsRealtime(3f);
-        noResourcesText.SetActive(false);
+        warningText.gameObject.SetActive(false);
     }
 
     private void SetGameSpeed(float timeScale)
@@ -216,5 +226,18 @@ public class UIController : MonoBehaviour
     {
         gameOverPanel.SetActive(true);
         GameManager.Instance.SetTimeScale(0f);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        StartCoroutine(ShowObjective());
+    }
+
+    private IEnumerator ShowObjective()
+    {
+        objectiveText.text = $"Survive {LevelManager.Instance.currentLevel.wavesToWin} waves!";
+        objectiveText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        objectiveText.gameObject.SetActive(false);
     }
 }
