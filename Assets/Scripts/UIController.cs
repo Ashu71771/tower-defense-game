@@ -24,6 +24,7 @@ public class UIController : MonoBehaviour
     [SerializeField] private Color selectedButtonColor = Color.blue;
     [SerializeField] private Color normalTextColor = Color.black;
     [SerializeField] private Color selectedTextColor = Color.white;
+    [SerializeField] private GameObject gameOverPanel;
 
     [SerializeField] private GameObject pausePanel;
     private bool _isGamePaused = false;
@@ -77,7 +78,7 @@ public class UIController : MonoBehaviour
         livesText.text= $"Lives: {currentLives}";
         if(currentLives <=0)
         {
-            //ShowGameOver();
+            ShowGameOver();
         }
     }
 
@@ -209,5 +210,11 @@ public class UIController : MonoBehaviour
     {
         GameManager.Instance.SetTimeScale(1f);
         SceneManager.LoadScene("MainMenu");
+    }
+
+    private void ShowGameOver()
+    {
+        gameOverPanel.SetActive(true);
+        GameManager.Instance.SetTimeScale(0f);
     }
 }
