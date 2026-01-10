@@ -5,10 +5,12 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using System;
 
 
 public class UIController : MonoBehaviour
 {
+    public static UIController Instance {get;private set;}
     [SerializeField] private TMP_Text waveText;
     [SerializeField] private TMP_Text livesText;
     [SerializeField] private TMP_Text resourceText;
@@ -20,12 +22,15 @@ public class UIController : MonoBehaviour
     [SerializeField] private Button speed1Button;
     [SerializeField] private Button speed2Button;
     [SerializeField] private Button speed3Button;
+    [SerializeField] private Button pauseButton;
+    [SerializeField] private Button nextLevelButton;
 
     [SerializeField] private Color normalButtonColor = Color.white;
     [SerializeField] private Color selectedButtonColor = Color.blue;
     [SerializeField] private Color normalTextColor = Color.black;
     [SerializeField] private Color selectedTextColor = Color.white;
     [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameObject missionCompletePanel;
 
     [SerializeField] private GameObject pausePanel;
     private bool _isGamePaused = false;
@@ -35,6 +40,20 @@ public class UIController : MonoBehaviour
     [SerializeField] private TowerData[] towers;
     private List<GameObject> activeCards = new List<GameObject>();
 
+    private void Awake()
+    {
+        if(Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        else
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+
     private void OnEnable()
     {
         Spawner.OnWaveChanged +=UpdateWaveText;
@@ -43,6 +62,7 @@ public class UIController : MonoBehaviour
         Platform.OnPlatformClicked += HandlePlatformClicked;
         TowerCard.OnTowerSelected += HandleTowerSelected;
         SceneManager.sceneLoaded += OnSceneLoaded;
+        Spawner.OnMissionComplete += ShowMissionComplete;
     }
 
     private void OnDisable()
@@ -53,6 +73,7 @@ public class UIController : MonoBehaviour
         Platform.OnPlatformClicked -=HandlePlatformClicked;
         TowerCard.OnTowerSelected -= HandleTowerSelected;
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        Spawner.OnMissionComplete -= ShowMissionComplete;
     }
 
     private void Start()
@@ -98,7 +119,7 @@ public class UIController : MonoBehaviour
 
     private void ShowTowerPanel()
     {
-        if(pausePanel.activeSelf)
+        if(pausePanel.activeSelf || gameOverPanel.activeSelf || missionCompletePanel.activeSelf)
             return;
             
         towerPanel.SetActive(true);
@@ -183,7 +204,7 @@ public class UIController : MonoBehaviour
 
     public void TogglePause()
     {
-        if(towerPanel.activeSelf)
+        if(towerPanel.activeSelf || gameOverPanel.activeSelf ||missionCompletePanel.activeSelf)
             return;
 
         if(_isGamePaused)
@@ -202,9 +223,7 @@ public class UIController : MonoBehaviour
 
     public void RestartLevel()
     {
-        GameManager.Instance.SetTimeScale(1f);
-        Scene currentScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(currentScene.buildIndex);
+        LevelManager.Instance.LoadLevel(LevelManager.Instance.currentLevel);
     }
 
     public void QuitGame()
@@ -230,7 +249,20 @@ public class UIController : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        StartCoroutine(ShowObjective());
+        Camera mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
+        Canvas canvas = GetComponent<Canvas>();
+        canvas.worldCamera = mainCamera;
+        HidePanels();
+
+        if(scene.name == "MainMenu")
+        {
+            HideUI();
+        }
+        else
+        {
+            ShowUI();
+            StartCoroutine(ShowObjective());
+        }
     }
 
     private IEnumerator ShowObjective()
@@ -239,5 +271,69 @@ public class UIController : MonoBehaviour
         objectiveText.gameObject.SetActive(true);
         yield return new WaitForSeconds(5f);
         objectiveText.gameObject.SetActive(false);
+    }
+
+    private void ShowMissionComplete()
+    {
+        missionCompletePanel.SetActive(true);
+        GameManager.Instance.SetTimeScale(0f);
+    }
+
+    public void EnterEndlessMode()
+    {
+        missionCompletePanel.SetActive(false);
+        GameManager.Instance.SetTimeScale(GameManager.Instance.GameSpeed);
+        Spawner.Instance.EnableEndlessMode();
+    }
+
+    private void HideUI()
+    {
+        HidePanels();
+        waveText.gameObject.SetActive(false);
+        livesText.gameObject.SetActive(false);
+        resourceText.gameObject.SetActive(false);
+        warningText.gameObject.SetActive(false);
+        speed1Button.gameObject.SetActive(false);
+        speed2Button.gameObject.SetActive(false);
+        speed3Button.gameObject.SetActive(false);
+        pauseButton.gameObject.SetActive(false);
+    }
+
+    private void ShowUI()
+    {
+        waveText.gameObject.SetActive(true);
+        livesText.gameObject.SetActive(true);
+        resourceText.gameObject.SetActive(true);
+        warningText.gameObject.SetActive(true);
+        speed1Button.gameObject.SetActive(true);
+        speed2Button.gameObject.SetActive(true);
+        speed3Button.gameObject.SetActive(true);
+        pauseButton.gameObject.SetActive(true);
+    }
+
+    private void HidePanels()
+    {
+        pausePanel.SetActive(false);
+        gameOverPanel.SetActive(false);
+        missionCompletePanel.SetActive(false);
+    }
+
+    public void LoadNextLevel()
+    {
+        var levelManager = LevelManager.Instance;
+        int currentIndex = Array.IndexOf(levelManager.allLevels, levelManager.currentLevel);
+        int nextIndex = currentIndex + 1;
+        if(nextIndex < levelManager.allLevels.Length)
+        {
+            missionCompletePanel.SetActive(false);
+            levelManager.LoadLevel(levelManager.allLevels[nextIndex]);
+        }
+    }
+
+    private void UpdateNextLevelButton()
+    {
+        var levelManager = LevelManager.Instance;
+        int currentIndex = Array.IndexOf(levelManager.allLevels, levelManager.currentLevel);
+        nextLevelButton.interactable = currentIndex + 1 < levelManager.allLevels.Length;
     }
 }

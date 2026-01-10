@@ -7,8 +7,7 @@ public class MainMenuContainer : MonoBehaviour
 {
     public void StartGame()
     {
-        Debug.Log("Starting Game...");
-        SceneManager.LoadScene("Game");
+        LevelManager.Instance.LoadLevel(LevelManager.Instance.allLevels[0]);
     }
 
     public void QuitGame()

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,6 +26,7 @@ public class GameManager : MonoBehaviour
         else
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
     }
 
@@ -32,12 +34,14 @@ public class GameManager : MonoBehaviour
     {
         Enemy.onEnemyReachedEnd +=HandleEnemyReachedEnd;
         Enemy.OnEnemyDestroyed +=HandleEnemyDestroyed;
+        SceneManager.sceneLoaded +=OnSceneLoaded;
     }
 
     private void OnDisable()
     {
         Enemy.onEnemyReachedEnd -=HandleEnemyReachedEnd;
         Enemy.OnEnemyDestroyed -=HandleEnemyDestroyed;
+        SceneManager.sceneLoaded -=OnSceneLoaded;
     }
 
     private void Start()
@@ -81,6 +85,24 @@ public class GameManager : MonoBehaviour
         {
             _resources -=amount;
             OnResourcesChanged?.Invoke(_resources);
+        }
+    }
+
+    public void ResetGameState()
+    {
+        _lives = LevelManager.Instance.currentLevel.startingLives;
+        OnLivesChanged?.Invoke(_lives);
+        _resources = LevelManager.Instance.currentLevel.startingResources;
+        OnResourcesChanged?.Invoke(_resources);
+
+        SetGameSpeed(1f);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if(LevelManager.Instance !=null && LevelManager.Instance.currentLevel !=null)
+        {
+            ResetGameState();
         }
     }
 }

@@ -5,7 +5,9 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
+    public static Spawner Instance {get; private set;}
     public static event Action<int> OnWaveChanged;
+    public static event Action OnMissionComplete;
 
     [SerializeField] private WaveData[] waves;
     private int _currentWaveIndex = 0;
@@ -25,6 +27,7 @@ public class Spawner : MonoBehaviour
     private float _waveCooldown;
     private int _waveCounter = 0;
     private bool _isBetweenWaves = false;
+    private bool _isEndlessMode = false;
 
     private void Awake()
     {
@@ -34,6 +37,14 @@ public class Spawner : MonoBehaviour
             {EnemyType.Dragon,dragonPool},
             {EnemyType.Kaiju,kaijuPool}
         };
+        if(Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
     }
 
     private void OnEnable()
@@ -60,6 +71,11 @@ public class Spawner : MonoBehaviour
             _waveCooldown -=Time.deltaTime;
             if(_waveCooldown<=0f)
             {
+                if(_waveCounter + 1 >=LevelManager.Instance.currentLevel.wavesToWin && !_isEndlessMode)
+                {
+                    OnMissionComplete?.Invoke();
+                    return;
+                }
                 _currentWaveIndex =(_currentWaveIndex + 1) % waves.Length;
                 _waveCounter++;
                 OnWaveChanged?.Invoke(_waveCounter);
@@ -107,5 +123,10 @@ public class Spawner : MonoBehaviour
     private void HandleEnemyDestroyed(Enemy enemy)
     {
         _enemiesRemoved++;
+    }
+
+    public void EnableEndlessMode()
+    {
+        _isEndlessMode = true;
     }
 }
