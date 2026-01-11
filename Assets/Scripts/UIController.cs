@@ -309,6 +309,7 @@ public class UIController : MonoBehaviour
         speed2Button.gameObject.SetActive(true);
         speed3Button.gameObject.SetActive(true);
         pauseButton.gameObject.SetActive(true);
+        HighlightSelectedSpeedButton(GameManager.Instance.GameSpeed);
     }
 
     private void HidePanels()
