@@ -9,9 +9,21 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioSource musicSource;
 
+    public AudioClip mainMenuMusic;
+    public AudioClip gameplayMusic;
     public AudioClip buttonClickClip;
     public AudioClip buttonHoverClip;
     public AudioClip towerPlacedClip;
+    public AudioClip pauseClip;
+    public AudioClip unPauseClip;
+    public AudioClip speedSlowClip;
+    public AudioClip speedNormalClip;
+    public AudioClip speedFastClip;
+    public AudioClip panelToggleClip;
+    public AudioClip warningCLip;
+    public AudioClip enemyDestroyedClip;
+    public AudioClip missionCompleteClip;
+    public AudioClip gameOverClip;
 
     private void Awake()
     {
@@ -27,5 +39,30 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    
+    public void PlaySound(AudioClip clip)
+    {
+        sfxSource.PlayOneShot(clip);
+    }    
+
+    public void PlayTowerPlaced() => PlaySound(towerPlacedClip); 
+    public void PlayEnemyDestroyed() => PlaySound(enemyDestroyedClip);
+    public void PlayButtonClick() => PlaySound(buttonClickClip);
+    public void PlayButtonHover() => PlaySound(buttonHoverClip);
+    public void PlayMissionComplete() => PlaySound(missionCompleteClip);
+    public void PlayGameOver() => PlaySound(gameOverClip);
+    public void PlayPause() => PlaySound(pauseClip);
+    public void PlayUnPause() => PlaySound(unPauseClip);
+    public void PlaySpeedSlow() => PlaySound(speedSlowClip);
+    public void PlaySpeedNormal() => PlaySound(speedNormalClip);
+    public void PlaySpeedFast() => PlaySound(speedFastClip);
+    public void PlayPanelToggle() => PlaySound(panelToggleClip);
+    public void PlayWarning() => PlaySound(warningCLip);
+
+    public void PlayMusic(AudioClip clip)
+    {
+        if(musicSource.clip == clip && musicSource.isPlaying) return;
+        musicSource.clip = clip;
+        musicSource.loop = true;
+        musicSource.Play();
+    }
 }
