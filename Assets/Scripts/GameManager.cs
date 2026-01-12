@@ -100,9 +100,14 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        if(scene.name == "MainMenu") 
+        {
+            AudioManager.Instance.PlayMusic(AudioManager.Instance.mainMenuMusic);
+        }
         if(LevelManager.Instance !=null && LevelManager.Instance.currentLevel !=null)
         {
             ResetGameState();
+            AudioManager.Instance.PlayMusic(AudioManager.Instance.gameplayMusic);
         }
     }
 }
