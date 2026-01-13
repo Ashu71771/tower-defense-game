@@ -16,10 +16,12 @@ public class Enemy : MonoBehaviour
     private int _currentWaypoint;
     private float _lives;
     private float _maxLives;
+    private Vector3 _offset;
 
     [SerializeField] private Transform healthBar;
     private Vector3 _healthOriginalScale;
     private bool _hasBeenCounted = false;
+    private float _speed;
 
     private void Awake()
     {
@@ -30,13 +32,13 @@ public class Enemy : MonoBehaviour
     private void OnEnable()
     {
         _currentWaypoint = 0;
-        _targetPosition = _currentPath.GetPosition(_currentWaypoint);
+        _targetPosition = _currentPath.GetPosition(_currentWaypoint)+ _offset;
     }
     void Update()
     {
         if(_hasBeenCounted) return;
 
-        transform.position = Vector3.MoveTowards(transform.position, _targetPosition,data.speed * Time.deltaTime);
+        transform.position = Vector3.MoveTowards(transform.position, _targetPosition, _speed * Time.deltaTime);
 
         float relativeDistance = (transform.position-_targetPosition).magnitude;
         if(relativeDistance<0.1f)
@@ -44,7 +46,7 @@ public class Enemy : MonoBehaviour
             if(_currentWaypoint <_currentPath.Waypoints.Length -1)
             {
                 _currentWaypoint++;
-                _targetPosition = _currentPath.GetPosition(_currentWaypoint);
+                _targetPosition = _currentPath.GetPosition(_currentWaypoint) + _offset;
             }
             else
             {
@@ -85,5 +87,9 @@ public class Enemy : MonoBehaviour
         _maxLives = data.lives * healthMultiplier;
         _lives =_maxLives;
         UpdateHealth();
+        _speed = UnityEngine.Random.Range(data.minSpeed, data.maxSpeed);
+        float _offsetX = UnityEngine.Random.Range(-0.5f , 0.5f);
+        float _offsetY = UnityEngine.Random.Range(-0.5f , 0.5f);
+        _offset = new Vector2(_offsetX , _offsetY);
     }
 }

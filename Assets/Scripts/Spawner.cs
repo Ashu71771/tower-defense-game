@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Spawner : MonoBehaviour
 {
@@ -44,6 +45,7 @@ public class Spawner : MonoBehaviour
         else
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
     }
 
@@ -51,12 +53,14 @@ public class Spawner : MonoBehaviour
     {
         Enemy.onEnemyReachedEnd +=HandleEnemyReachedEnd;
         Enemy.OnEnemyDestroyed +=HandleEnemyDestroyed;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
         Enemy.onEnemyReachedEnd -=HandleEnemyReachedEnd;
         Enemy.OnEnemyDestroyed -=HandleEnemyDestroyed;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
@@ -92,7 +96,7 @@ public class Spawner : MonoBehaviour
             } 
             else if(_spawnCounter >= CurrentWave.enemiesPerWave && _enemiesRemoved >= CurrentWave.enemiesPerWave)
             {
-                if(_waveCounter + 1 >=LevelManager.Instance.currentLevel.wavesToWin && !_isEndlessMode)
+                if(_waveCounter + 1 >=LevelManager.Instance.currentLevel.wavesToWin && !_isEndlessMode && GameManager.Instance.Lives > 0)
                 {
                     OnMissionComplete?.Invoke();
                     return;
@@ -130,5 +134,28 @@ public class Spawner : MonoBehaviour
     public void EnableEndlessMode()
     {
         _isEndlessMode = true;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        ResetWaveStats();
+    }
+
+    private void ResetWaveStats()
+    {
+        _currentWaveIndex = 0;
+        _waveCounter = 0;
+        _spawnCounter = 0;
+        _enemiesRemoved = 0;
+        _spawnTimer = 0;
+        _isBetweenWaves = false;
+
+        foreach(var pool in _poolDictionary.Values)
+        {
+            if(pool != null)
+            {
+                pool.ResetPool();
+            }
+        }
     }
 }

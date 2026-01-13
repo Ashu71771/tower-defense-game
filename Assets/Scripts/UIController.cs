@@ -272,6 +272,7 @@ public class UIController : MonoBehaviour
         Camera mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
         Canvas canvas = GetComponent<Canvas>();
         canvas.worldCamera = mainCamera;
+        _isGamePaused = false;
         HidePanels();
         _missionCompleteSoundPlayed = false;
 

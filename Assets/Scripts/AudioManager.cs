@@ -36,6 +36,7 @@ public class AudioManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            musicSource.volume = 0.4f;
         }
     }
 
