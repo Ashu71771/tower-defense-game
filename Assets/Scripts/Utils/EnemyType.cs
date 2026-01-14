@@ -6,5 +6,8 @@ public enum EnemyType
 {
     Orc,
     Dragon,
-    Kaiju
+    Kaiju,
+    Wolf,
+    Zombie,
+    Frank
 }

@@ -10,5 +10,8 @@ public class LevelData : ScriptableObject
     public int startingResources;
     public int startingLives;
 
+    public Vector2 initialSpawnPosition;
+    public WaveData[] waves;
+
     //public AudioClip backgroundMusic;
 }

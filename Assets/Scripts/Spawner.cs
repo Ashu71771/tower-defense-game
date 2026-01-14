@@ -10,9 +10,9 @@ public class Spawner : MonoBehaviour
     public static event Action<int> OnWaveChanged;
     public static event Action OnMissionComplete;
 
-    [SerializeField] private WaveData[] waves;
+    private WaveData[] _waves => LevelManager.Instance.currentLevel.waves;
     private int _currentWaveIndex = 0;
-    private WaveData CurrentWave => waves[_currentWaveIndex];
+    private WaveData CurrentWave => _waves[_currentWaveIndex];
 
     private float _spawnTimer;
     private float _spawnCounter;
@@ -21,6 +21,9 @@ public class Spawner : MonoBehaviour
     [SerializeField] private ObjectPooler orcPool;
     [SerializeField] private ObjectPooler dragonPool;
     [SerializeField] private ObjectPooler kaijuPool;
+    [SerializeField] private ObjectPooler wolfPool;
+    [SerializeField] private ObjectPooler zombiePool;
+    [SerializeField] private ObjectPooler frankPool;
 
     private Dictionary<EnemyType, ObjectPooler> _poolDictionary;
 
@@ -29,6 +32,8 @@ public class Spawner : MonoBehaviour
     private int _waveCounter = 0;
     private bool _isBetweenWaves = false;
     private bool _isEndlessMode = false;
+    private Path _currentPath;
+    private bool _isGamePlayScene = false;
 
     private void Awake()
     {
@@ -36,7 +41,10 @@ public class Spawner : MonoBehaviour
         {
             {EnemyType.Orc,orcPool},
             {EnemyType.Dragon,dragonPool},
-            {EnemyType.Kaiju,kaijuPool}
+            {EnemyType.Kaiju,kaijuPool},
+            {EnemyType.Wolf, wolfPool},
+            {EnemyType.Zombie, zombiePool},
+            {EnemyType.Frank, frankPool}
         };
         if(Instance != null && Instance != this)
         {
@@ -66,17 +74,18 @@ public class Spawner : MonoBehaviour
     private void Start()
     {
         OnWaveChanged?.Invoke(_waveCounter);
-        AudioManager.Instance.PlaySound(CurrentWave.waveSpawnClip);
+        
     }
 
     void Update()
     {
+        if (!_isGamePlayScene || _currentPath == null || LevelManager.Instance.currentLevel == null) return;
         if(_isBetweenWaves)
         {
             _waveCooldown -=Time.deltaTime;
             if(_waveCooldown<=0f)
             {
-                _currentWaveIndex =(_currentWaveIndex + 1) % waves.Length;
+                _currentWaveIndex =(_currentWaveIndex + 1) % _waves.Length;
                 _waveCounter++;
                 OnWaveChanged?.Invoke(_waveCounter);
                 AudioManager.Instance.PlaySound(CurrentWave.waveSpawnClip);
@@ -110,16 +119,46 @@ public class Spawner : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        if(_poolDictionary.TryGetValue(CurrentWave.enemyType, out var pool))
+        if (_currentPath == null)
+        {
+            return;
+        }
+
+        if (_poolDictionary.TryGetValue(CurrentWave.enemyType, out var pool))
         {
             GameObject spawnedObject = pool.GetPooledObject();
-            spawnedObject.transform.position = transform.position;
-            float healthMultiplier = 1f + (_waveCounter * 0.1f); //10% increase 
+
+            if (spawnedObject == null)
+            {
+                return;
+            }
+
             Enemy enemy = spawnedObject.GetComponent<Enemy>();
-            enemy.Initialize(healthMultiplier);
+            if (enemy == null)
+            {
+                return;
+            }
+
+            spawnedObject.transform.position = transform.position;
+            float healthMultiplier = 1f + (_waveCounter * 0.1f);
+            enemy.Initialize(_currentPath, healthMultiplier);
             spawnedObject.SetActive(true);
         }
     }
+
+
+    // private void SpawnEnemy()
+    // {
+    //     if(_poolDictionary.TryGetValue(CurrentWave.enemyType, out var pool))
+    //     {
+    //         GameObject spawnedObject = pool.GetPooledObject();
+    //         spawnedObject.transform.position = transform.position;
+    //         float healthMultiplier = 1f + (_waveCounter * 0.1f); //10% increase 
+    //         Enemy enemy = spawnedObject.GetComponent<Enemy>();
+    //         enemy.Initialize(_currentPath, healthMultiplier);
+    //         spawnedObject.SetActive(true);
+    //     }
+    // }
 
     private void HandleEnemyReachedEnd(EnemyData data)
     {
@@ -138,17 +177,27 @@ public class Spawner : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        _isGamePlayScene = scene.name != "MainMenu";
         ResetWaveStats();
+        if(!_isGamePlayScene) return;
+        _currentPath = GameObject.Find("Path1").GetComponent<Path>();
+        AudioManager.Instance.PlaySound(CurrentWave.waveSpawnClip);
+        if(LevelManager.Instance.currentLevel != null)
+        {
+            transform.position = LevelManager.Instance.currentLevel.initialSpawnPosition;
+        }
     }
 
     private void ResetWaveStats()
     {
         _currentWaveIndex = 0;
         _waveCounter = 0;
+        OnWaveChanged?.Invoke(_waveCounter);
         _spawnCounter = 0;
         _enemiesRemoved = 0;
         _spawnTimer = 0;
         _isBetweenWaves = false;
+        _isEndlessMode = false;
 
         foreach(var pool in _poolDictionary.Values)
         {

@@ -16,3 +16,8 @@ MonoBehaviour:
   wavesToWin: 3
   startingResources: 400
   startingLives: 8
+  initialSpawnPosition: {x: -12, y: -1}
+  waves:
+  - {fileID: 11400000, guid: 85e8fa49d336f5a42aa06138ed0bc0c8, type: 2}
+  - {fileID: 11400000, guid: 32bc1976b1834f64da91ceda225525d7, type: 2}
+  - {fileID: 11400000, guid: 4256d24d49c894b48ae0465dc38ff5c7, type: 2}
